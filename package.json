@@ -1,0 +1,17 @@
+{
+  "name": "testflight_automation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "automate.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "imap": "^0.8.19",
+    "mailparser": "^3.7.4",
+    "nodemailer": "^7.0.5"
+  }
+}

@@ -10,8 +10,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.11.0",
+    "https": "^1.0.0",
     "imap": "^0.8.19",
     "mailparser": "^3.7.4",
-    "nodemailer": "^7.0.5"
+    "node-html-parser": "^7.0.1",
+    "nodemailer": "^7.0.5",
+    "puppeteer": "^24.15.0",
+    "tough-cookie": "^5.1.2"
   }
 }

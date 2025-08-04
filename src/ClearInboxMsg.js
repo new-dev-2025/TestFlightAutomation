@@ -1,5 +1,5 @@
 const Imap = require('imap');
-const accounts = require('./Account.json');
+const accounts = require('../src/data/Account.json')
 
 // Configuration options
 const CONFIG = {
@@ -284,7 +284,7 @@ async function validateConfiguration() {
   return true;
 }
 
-async function main() {
+async function RunClearInboxAppleID() {
   console.log('🧹 AUTOMATED INBOX CLEANER');
   console.log('='.repeat(50));
   console.log(`📅 Started at: ${new Date()}`);
@@ -350,5 +350,7 @@ process.on('uncaughtException', function (err) {
   process.exit(1);
 });
 
-// Start the application
-main().catch(console.error);
+module.exports = {
+  RunClearInboxAppleID
+
+}

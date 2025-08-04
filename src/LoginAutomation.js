@@ -1,10 +1,16 @@
 const puppeteer = require('puppeteer');
 const https = require('https');
-const AppleIDList = require('./AppleID.json')
+const AppleIDList = require('../src/data/AppleID.json')
 
 const TESTFLIGHT_ACTIVATION_URLs = [
-  'https://appstoreconnect.apple.com/activation_ds?key=709d1ee8949daa6fe8d7439cc3e5fff1',
-]
+    "https://appstoreconnect.apple.com/activation_ds?key=cbbe6372bd950bcb256138479827e6a1",
+    "https://appstoreconnect.apple.com/activation_ds?key=bf92a42a9683f41d80d3cdcba2fca4c7",
+    // "https://appstoreconnect.apple.com/activation_ds?key=96a661a2a845b54bae2015e84deb4848",
+    // "https://appstoreconnect.apple.com/activation_ds?key=9f32481ae23d6282c8e0896fd066ffe5",
+    // "https://appstoreconnect.apple.com/activation_ds?key=cb60a34ef023cce2c7360d458f7a7c21",
+    // "https://appstoreconnect.apple.com/activation_ds?key=a1087590731ed49ff0c785950c643a88",
+    // "https://appstoreconnect.apple.com/activation_ds?key=8d3c5d9610b9a0c61787e514bab3d204"
+];
 
 function makeHttpRequest(url) {
   return new Promise((resolve, reject) => {
@@ -385,7 +391,7 @@ class FullyAutomatedTestFlight {
   }
 }
 
-async function runFullyAutomatedTestFlight() {
+async function RunAcceptableInvitationLinkURL() {
   const automation = new FullyAutomatedTestFlight();
   await automation.launchBrowser();
 
@@ -421,15 +427,10 @@ async function runFullyAutomatedTestFlight() {
   }
 }
 
-if (require.main === module) {
-  const args = process.argv.slice(2);
-  if (args.includes('--sms-only')) {
-  } else {
-    runFullyAutomatedTestFlight().catch(console.error);
-  }
-}
 module.exports = {
-  runFullyAutomatedTestFlight,
+  RunAcceptableInvitationLinkURL,
   FullyAutomatedTestFlight,
   getVerificationCode
 };
+
+RunAcceptableInvitationLinkURL()

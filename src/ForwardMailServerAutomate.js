@@ -1,7 +1,7 @@
 const Imap = require('imap');
 const nodemailer = require('nodemailer');
 const { simpleParser } = require('mailparser');
-const accounts = require('./Account.json');
+const accounts = require('../src/data/Account.json');
 
 // Main destination email (like iCloud forwarding)
 const MAIN_EMAIL = 'ebrartelek08@icloud.com';
@@ -267,10 +267,8 @@ function startForwarding(account) {
   }
 }
 
-// Configuration verification
 async function verifyConfiguration() {
   console.log('[🔍] Verifying email forwarding configuration...');
-  
   if (!accounts || accounts.length === 0) {
     console.error('[❌] No accounts found in Account.json');
     console.log('📝 Create Account.json with format:');
@@ -310,7 +308,7 @@ process.on('unhandledRejection', function (reason, promise) {
 });
 
 // Main application
-async function main() {
+async function RunForwardMailToMainMailServer() {
   try {
     console.log('='.repeat(60));
     console.log('🚀 EMAIL FORWARDING SERVICE STARTING');
@@ -337,5 +335,8 @@ async function main() {
   }
 }
 
-// Start the application
-main();
+module.exports = {
+  RunForwardMailToMainMailServer
+}
+
+RunForwardMailToMainMailServer()

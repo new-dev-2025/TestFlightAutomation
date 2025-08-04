@@ -7,7 +7,6 @@ class AppStoreActivationExtractor {
     constructor() {
         this.imap = null;
     }
-
     async getUserInput(prompt) {
         const rl = readline.createInterface({
             input: process.stdin,
@@ -252,11 +251,10 @@ class AppStoreActivationExtractor {
 }
 
 // Main runner
-async function main() {
+async function RunAcceptableInviteLinkScrapper() {
     console.log('🎯 App Store Connect Activation Link Extractor');
     console.log('   Target: https://appstoreconnect.apple.com/activation_ds?key=...');
     console.log('='.repeat(65));
-    console.log();
 
     const extractor = new AppStoreActivationExtractor();
 
@@ -318,6 +316,9 @@ process.on('SIGINT', () => {
     process.exit(0);
 });
 
-if (require.main === module) {
-    main();
+module.exports = {
+    RunAcceptableInviteLinkScrapper
 }
+
+
+RunAcceptableInviteLinkScrapper()

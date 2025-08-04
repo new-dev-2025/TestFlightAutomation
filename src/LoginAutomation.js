@@ -3,14 +3,26 @@ const https = require('https');
 const AppleIDList = require('../src/data/AppleID.json')
 
 const TESTFLIGHT_ACTIVATION_URLs = [
-    "https://appstoreconnect.apple.com/activation_ds?key=cbbe6372bd950bcb256138479827e6a1",
-    "https://appstoreconnect.apple.com/activation_ds?key=bf92a42a9683f41d80d3cdcba2fca4c7",
-    // "https://appstoreconnect.apple.com/activation_ds?key=96a661a2a845b54bae2015e84deb4848",
-    // "https://appstoreconnect.apple.com/activation_ds?key=9f32481ae23d6282c8e0896fd066ffe5",
-    // "https://appstoreconnect.apple.com/activation_ds?key=cb60a34ef023cce2c7360d458f7a7c21",
-    // "https://appstoreconnect.apple.com/activation_ds?key=a1087590731ed49ff0c785950c643a88",
-    // "https://appstoreconnect.apple.com/activation_ds?key=8d3c5d9610b9a0c61787e514bab3d204"
+  // 'https://appstoreconnect.apple.com/activation_ds?key=2cee7c2eba4a85cae1039ea1cc62b0fc',
+  // 'https://appstoreconnect.apple.com/activation_ds?key=2c91a43e15c632c1567f4425b770bc2b',
+  // 'https://appstoreconnect.apple.com/activation_ds?key=1484da23ae10c55ff8baab3901c0d227',
+  // 'https://appstoreconnect.apple.com/activation_ds?key=dac9e135c17aa125092a835509bdedb6',
+  // 'https://appstoreconnect.apple.com/activation_ds?key=3eef080a991b7b5eeb9a14021872e69e',
+  // 'https://appstoreconnect.apple.com/activation_ds?key=7e49667d630988995fcb646eaa2715f2',
+  // 'https://appstoreconnect.apple.com/activation_ds?key=02892ba70296f327513aa6b6a9fc02ec',
+  // 'https://appstoreconnect.apple.com/activation_ds?key=0289cb181765b45dfcd1dfd137555fb2',
+  // 'https://appstoreconnect.apple.com/activation_ds?key=4a27a9e13c568ecd57d2eb4fe5ed56c7',
+  // 'https://appstoreconnect.apple.com/activation_ds?key=94dce5dddc87abaf8c319cd73f40cfbc',
+
+
+
+
+
 ];
+
+function wait(seconds) {
+  return new Promise(resolve => setTimeout(resolve, seconds * 1));
+}
 
 function makeHttpRequest(url) {
   return new Promise((resolve, reject) => {
@@ -37,20 +49,15 @@ function makeHttpRequest(url) {
 }
 
 async function getVerificationCode(smsCode) {
-  try {
-    const response = await makeHttpRequest(`https://lixsms.com/message/?code=${smsCode}`);
-    if (response.statusCode !== 200) return null;
-    const jsonData = JSON.parse(response.body);
-    if (jsonData.message && jsonData.message[0] && jsonData.message[0].body) {
-      const body = jsonData.message[0].body;
-      const match = body.match(/(\d{6})/);
-      return match ? match[0] : null;
-    }
-    return null;
-  } catch (error) {
-    console.error(`SMS error: ${error.message}`);
-    return null;
+  const response = await makeHttpRequest(`https://lixsms.com/message/?code=${smsCode}`);
+  if (response.statusCode !== 200) return null;
+  const jsonData = JSON.parse(response.body);
+  if (jsonData.message && jsonData.message[0] && jsonData.message[0].body) {
+    const body = jsonData.message[0].body;
+    const match = body.match(/(\d{6})/);
+    return match ? match[0] : null;
   }
+  return null;
 }
 
 class FullyAutomatedTestFlight {
@@ -60,40 +67,27 @@ class FullyAutomatedTestFlight {
     this.accountInfo = null;
   }
 
-  async runFullAutomation(activationUrl) {
-    try {
-      await this.launchBrowser();
-      await this.navigateToActivation(activationUrl);
-      await this.waitForCompleteLoad();
-      await this.performAutomaticLogin();
-      await this.handleAutomatic2FA();
-      await this.acceptTermsOfService();
-      const success = await this.verifyCompletion();
-      return { success, method: 'FULL_AUTOMATION' };
-    } catch (error) {
-      console.error(`Automation error: ${error.message}`);
-      return { success: false, error: error.message };
-    } finally {
-      await this.wait(10000);
-    }
-  }
 
-  // New method for single page processing
   async runSingleActivation(activationUrl) {
-    try {
-      await this.navigateToActivation(activationUrl);
-      await this.waitForCompleteLoad();
-      await this.performAutomaticLogin();
-      await this.handleAutomatic2FA();
-      await this.acceptTermsOfService();
-      const success = await this.verifyCompletion();
-      return { success, method: 'SINGLE_PAGE_AUTOMATION' };
-    } catch (error) {
-      console.error(`Single activation error: ${error.message}`);
-      return { success: false, error: error.message };
+    await this.navigateToActivation(activationUrl);
+    await wait(5000)
+    const verifyLink = await this.checkInvalidUrl()
+    await wait(5000)
+    if (verifyLink.isInvalid) {
+      console.log('✅ Already acceptable invitation link');
+      return
+    }
+    const isLoginSuccess = await this.performAutomaticLogin();
+    if (isLoginSuccess) {
+      const is2FA = await this.handleAutomatic2FA();
+      if (is2FA) {
+        await this.acceptTermsOfService();
+        console.log('✅ Successful to confirm acceptable invitation link: ', this.accountInfo.email);
+      }
+    } else {
+      console.log('⚠️ Please check this email cuz no preset on our local: ', this.getUsernameFromURL());
     }
   }
-
   async launchBrowser() {
     this.browser = await puppeteer.launch({
       headless: false,
@@ -110,13 +104,34 @@ class FullyAutomatedTestFlight {
     await this.page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
   }
 
+  async checkInvalidUrl() {
+    await wait(3000);
+    const invalidStates = await this.page.evaluate(() => {
+      const bodyText = document.body.textContent.toLowerCase();
+
+      if (bodyText.includes('invitation has expired') ||
+        bodyText.includes('no longer valid') ||
+        bodyText.includes('invitation isn\'t valid') ||
+        bodyText.includes('can\'t link more providers')) {
+        return { invalid: true };
+      }
+
+      return { invalid: false };
+    });
+
+    if (invalidStates.invalid) {
+      console.log('❌ Invalid URL detected');
+      return { isInvalid: true };
+    }
+
+    return { isInvalid: false };
+  }
+
   async navigateToActivation(url) {
     await this.page.goto(url, {
       waitUntil: 'domcontentloaded',
       timeout: 30000
     });
-
-    await this.wait(5000);
   }
 
   async waitForCompleteLoad() {
@@ -124,50 +139,51 @@ class FullyAutomatedTestFlight {
       document.readyState === 'complete' &&
       document.querySelector('input, button') !== null
     );
-    await this.wait(3000);
+    await wait(3000);
+  }
+
+  getUsernameFromURL() {
+    const currentUrl = this.page.url();
+    const urlObj = new URL(currentUrl);
+    const username = urlObj.searchParams.get('username');
+    return username
   }
 
   async performAutomaticLogin(account) {
-    await this.wait(10000);
-    const currentUrl = this.page.url();
-    const urlObj = new URL(currentUrl);
-    const email = urlObj.searchParams.get('username');
+    await wait(10000);
+    const email = this.getUsernameFromURL()
     this.accountInfo = AppleIDList.find((x) => x.email == email)
+    if (!this.accountInfo) {
+      return false
+    }
     const passwordFieldExists = await this.page.$$('input, input[type="password"]');
     if (passwordFieldExists) {
       await passwordFieldExists[0].type(this.accountInfo.password);
-      await this.wait(2000);
+      await wait(2000);
       await this.submitLoginForm();
-      return
+      return true
     }
 
     let attempts = 0;
     const maxAttempts = 3;
-
     while (attempts < maxAttempts) {
-      try {
-        const emailField = await this.page.$('input[type="email"], input[type="text"][autocomplete="username"]');
-        if (emailField) {
-          await this.fillField(emailField, account.email);
-        }
-        await this.fillPasswordField(account.password);
-        const hasError = await this.page.evaluate(() => {
-          return document.body.textContent.includes('Check the account information');
-        });
-
-        if (hasError) {
-          attempts++;
-          console.log(`⚠️ Login failed (attempt ${attempts}/${maxAttempts})`);
-          await this.wait(2000);
-          continue;
-        }
-        await this.wait(8000);
-        return;
-      } catch (error) {
-        attempts++;
-        console.log(`⚠️ Login error (attempt ${attempts}/${maxAttempts}): ${error.message}`);
-        await this.wait(2000);
+      const emailField = await this.page.$('input[type="email"], input[type="text"][autocomplete="username"]');
+      if (emailField) {
+        await this.fillField(emailField, account.email);
       }
+      await this.fillPasswordField(account.password);
+      const hasError = await this.page.evaluate(() => {
+        return document.body.textContent.includes('Check the account information');
+      });
+
+      if (hasError) {
+        attempts++;
+        console.log(`⚠️ Login failed (attempt ${attempts}/${maxAttempts})`);
+        await wait(2000);
+        continue;
+      }
+      await wait(8000);
+      return false;
     }
     throw new Error('Login failed after maximum attempts');
   }
@@ -197,94 +213,77 @@ class FullyAutomatedTestFlight {
     const buttons = await this.page.$$('button, input[type="submit"]');
     const targetTexts = ['Continue', 'Sign In', 'Submit', 'Next'];
     for (const button of buttons) {
-      try {
-        const buttonText = await button.evaluate(el =>
-          el.textContent?.trim() || el.value?.trim() || ''
-        );
+      const buttonText = await button.evaluate(el =>
+        el.textContent?.trim() || el.value?.trim() || ''
+      );
 
-        if (targetTexts.some(text =>
-          buttonText.toLowerCase().includes(text.toLowerCase()))
-        ) {
-          console.log(`✅ Found submit button with text: ${buttonText}`);
-          await button.click();
-          return;
-        }
-      } catch (err) {
-        continue;
+      if (targetTexts.some(text =>
+        buttonText.toLowerCase().includes(text.toLowerCase()))
+      ) {
+        console.log(`✅ Found submit button with text: ${buttonText}`);
+        await button.click();
+        return;
       }
     }
     await this.page.keyboard.press('Enter');
   }
 
   async trustBtnClick() {
-    try {
-      await this.page.waitForSelector('#aid-auth-widget-iFrame', { timeout: 15000 });
-      console.log('✅ Found iframe');
-      const iframe = await this.page.$('#aid-auth-widget-iFrame');
-      if (!iframe) {
-        console.log('❌ Iframe not found');
-        return false;
-      }
-      const frame = await iframe.contentFrame();
-      if (!frame) {
-        console.log('❌ Could not access iframe content');
-        return false;
-      }
-      const trustButtons = await frame.$$('button[type="submit"]');
-      for (let i = 0; i < trustButtons.length; i++) {
-        try {
-          const text = await trustButtons[i].evaluate(el => el.textContent?.trim());
-          console.log(`Button ${i} text: "${text}"`);
-
-          if (text === 'Trust') {
-            console.log('🔒 Found Trust button in iframe, clicking...');
-            await trustButtons[i].click();
-            return true;
-          }
-        } catch (error) {
-          console.log(`Error checking button ${i}:`, error.message);
-        }
-      }
-
-      const allButtons = await frame.$$('button');
-      for (let i = 0; i < allButtons.length; i++) {
-        try {
-          const text = await allButtons[i].evaluate(el => el.textContent?.trim());
-          console.log(`All buttons ${i}: "${text}"`);
-
-          if (text === 'Trust') {
-            console.log('🔒 Found Trust button in iframe, clicking...');
-            await allButtons[i].click();
-            return true;
-          }
-        } catch (error) {
-          continue;
-        }
-      }
-      console.log('❌ Trust button not found in iframe');
-      return false;
-
-    } catch (error) {
-      console.log('❌ Error accessing iframe:', error.message);
+    await this.page.waitForSelector('#aid-auth-widget-iFrame', { timeout: 15000 });
+    console.log('✅ Found iframe');
+    const iframe = await this.page.$('#aid-auth-widget-iFrame');
+    if (!iframe) {
+      console.log('❌ Iframe not found');
       return false;
     }
+    const frame = await iframe.contentFrame();
+    if (!frame) {
+      console.log('❌ Could not access iframe content');
+      return false;
+    }
+    const trustButtons = await frame.$$('button[type="submit"]');
+    for (let i = 0; i < trustButtons.length; i++) {
+      const text = await trustButtons[i].evaluate(el => el.textContent?.trim());
+      console.log(`Button ${i} text: "${text}"`);
+
+      if (text === 'Trust') {
+        console.log('🔒 Found Trust button in iframe, clicking...');
+        await trustButtons[i].click();
+        return true;
+      }
+    }
+
+    const allButtons = await frame.$$('button');
+    for (let i = 0; i < allButtons.length; i++) {
+      const text = await allButtons[i].evaluate(el => el.textContent?.trim());
+      console.log(`All buttons ${i}: "${text}"`);
+
+      if (text === 'Trust') {
+        console.log('🔒 Found Trust button in iframe, clicking...');
+        await allButtons[i].click();
+        return true;
+      }
+    }
+
+    console.log('❌ Trust button not found in iframe');
+    return false;
   }
 
   async checkTermsCheckbox() {
     try {
-      await this.page.waitForSelector('.agree-checkbox', { timeout: 5000 });
+      await wait(5000)
+      await this.page.waitForSelector('.agree-checkbox', { timeout: 15000 });
       const label = await this.page.$('label[for="tosAgree"]');
       if (label) {
         await label.click();
         console.log('✅ Clicked tosAgree label');
-
-        // Verify it worked
         const isChecked = await this.page.$eval('#tosAgree', el => el.checked);
         if (isChecked) {
           console.log('✅ Checkbox is now checked via label click');
           return true;
         }
       }
+      await wait(2000)
       const success = await this.page.evaluate(() => {
         const checkbox = document.getElementById('tosAgree');
         const label = document.querySelector('label[for="tosAgree"]');
@@ -308,60 +307,108 @@ class FullyAutomatedTestFlight {
           checkbox.dispatchEvent(clickEvent);
         }
       });
-      console.log('✅ Checkbox state forced with events');
-      return true;
-
-    } catch (error) {
-      console.error('Error in checkTermsCheckbox:', error);
-      return false;
+    } catch {
+      console.log('✅ No agree Term privacy');
     }
+    console.log('✅ Checkbox state forced with events');
+    return true;
   }
 
   async acceptTermsOfService() {
-    await this.wait(5000)
+    await wait(5000)
     await this.trustBtnClick()
-    await this.wait(5000)
-    try {
-      await this.checkTermsCheckbox()
-      const agreeButton = await this.page.$('button.tb-btn--primary:not(.tb-btn--disabled)');
-      if (agreeButton) {
-        const buttonText = await agreeButton.evaluate(el => el.textContent?.trim());
-        if (buttonText === 'Agree') {
-          await agreeButton.click();
-          console.log('✅ Clicked Agree button');
-          return true;
-        }
+    await wait(10000)
+    await this.checkTermsCheckbox()
+    const agreeButton = await this.page.$('button.tb-btn--primary:not(.tb-btn--disabled)');
+    if (agreeButton) {
+      const buttonText = await agreeButton.evaluate(el => el.textContent?.trim());
+      if (buttonText === 'Agree') {
+        await agreeButton.click();
+        console.log('✅ Clicked Agree button');
+        return true;
       }
-      const buttons = await this.page.$$('button');
-      for (const button of buttons) {
-        try {
-          const buttonText = await button.evaluate(el => el.textContent?.trim());
-          const isDisabled = await button.evaluate(el => el.disabled);
-
-          if (buttonText === 'Agree' && !isDisabled) {
-            await button.click();
-            console.log('✅ Clicked Agree button (fallback)');
-            return true;
-          }
-        } catch (err) {
-          continue;
-        }
-      }
-      console.log('❌ Could not find or click Agree button');
-      return false;
-
-    } catch (error) {
-      console.log('❌ Error in acceptTermsOfService:', error.message);
-      return false;
     }
+    const buttons = await this.page.$$('button');
+    for (const button of buttons) {
+      const buttonText = await button.evaluate(el => el.textContent?.trim());
+      const isDisabled = await button.evaluate(el => el.disabled);
+
+      if (buttonText === 'Agree' && !isDisabled) {
+        await button.click();
+        console.log('✅ Clicked Agree button (fallback)');
+        return true;
+      }
+    }
+    console.log('❌ Could not find or click Agree button');
+    return false;
+  }
+
+  async tapResetToPhoneNumber() {
+
+    await this.page.waitForSelector('#aid-auth-widget-iFrame', { timeout: 15000 });
+    const iframe = await this.page.$('#aid-auth-widget-iFrame');
+    if (!iframe) return false;
+
+    const frame = await iframe.contentFrame();
+    if (!frame) return false;
+
+    const buttons = await frame.$$('button, a');
+    for (const button of buttons) {
+      const text = await button.evaluate(el => el.textContent?.trim() || '');
+      if (text.includes("Text code to")) {
+        await button.click();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async tabRequestByPhoneNumber() {
+    await wait(5000)
+    await this.page.waitForSelector('#aid-auth-widget-iFrame', { timeout: 15000 });
+    const iframe = await this.page.$('#aid-auth-widget-iFrame');
+    if (!iframe) return false;
+    const frame = await iframe.contentFrame();
+    if (!frame) return false;
+    const buttons = await frame.$$('button, a');
+    for (const button of buttons) {
+      const text = await button.evaluate(el => el.textContent?.trim() || '');
+      if (text.includes('Can’t get to your')) {
+        await button.click();
+        await wait(10000)
+        await this.tapResetToPhoneNumber()
+        return true;
+      }
+    }
+    return false;
   }
 
   async handleAutomatic2FA() {
-    await this.wait(10000);
-    const verificationCode = await getVerificationCode(this.accountInfo.smsCode)
+    console.log("🔒 Two-Factor Authentication");
+    await this.tabRequestByPhoneNumber()
+    await wait(5000);
+    let attempt = 0
+    let verificationCode = null
+    while (attempt < 3) {
+      await wait(5000);
+      verificationCode = await getVerificationCode(this.accountInfo.smsCode)
+      if (verificationCode != "" && verificationCode != null) {
+        attempt = 0
+        console.log('✅ Get Otp Successful: ', verificationCode);
+        break
+      }
+      attempt = attempt + 1
+      console.log('❌ Attempt To Get OTP: ', attempt);
+    }
+    if (attempt == 3) {
+      attempt = 0
+      return false
+    }
     const needs2FA = await this.page.$$('input, input[type="tel"]');
+    await wait(2000)
     needs2FA[0].type(verificationCode);
-    await this.wait(5000)
+    await wait(5000)
+    return true
   }
 
   async findButtonByText(text) {
@@ -374,57 +421,37 @@ class FullyAutomatedTestFlight {
     }
     return null;
   }
-
-  async verifyCompletion() {
-    await this.wait(5000);
-    const success = await this.page.evaluate(() => {
-      const pageText = document.body.textContent.toLowerCase();
-      return pageText.includes('success') ||
-        pageText.includes('accepted') ||
-        pageText.includes('completed');
-    });
-    return success;
-  }
-
-  async wait(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
 }
 
 async function RunAcceptableInvitationLinkURL() {
   const automation = new FullyAutomatedTestFlight();
   await automation.launchBrowser();
-
-  try {
-    const promises = TESTFLIGHT_ACTIVATION_URLs.map(async (url, index) => {
+  const promises = [];
+  for (let index = 0; index < TESTFLIGHT_ACTIVATION_URLs.length; index++) {
+    const url = TESTFLIGHT_ACTIVATION_URLs[index];
+    const delayedPromise = new Promise(async (resolve) => {
+      const delayTime = index * 60000;
+      if (delayTime > 0) {
+        console.log(`⏳ Tab ${index + 1}: Waiting ${delayTime / 1000} seconds before opening...`);
+        await new Promise(r => setTimeout(r, delayTime));
+      }
+      console.log(`🔄 Tab ${index + 1}: Opening now for URL: ${url}`);
       const page = await automation.browser.newPage();
-      await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-
+      await page.setUserAgent('Mozilla/5.0 (Macintosh; M1 Chip Mac OS X 11_15_7) AppleWebKit/937.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/937.36');
       const tabAutomation = new FullyAutomatedTestFlight();
       tabAutomation.browser = automation.browser;
       tabAutomation.page = page;
-
-      console.log(`🔄 Tab ${index + 1}: Processing URL: ${url}`);
-
-      try {
-        const result = await tabAutomation.runSingleActivation(url);
-        console.log(`✅ Tab ${index + 1}: Completed URL: ${url}`, result);
-        await page.close();
-
-        return { tabIndex: index + 1, url, ...result };
-      } catch (error) {
-        console.error(`❌ Tab ${index + 1}: Failed URL: ${url}`, error.message);
-        await page.close();
-        return { tabIndex: index + 1, url, success: false, error: error.message };
-      }
+      const result = await tabAutomation.runSingleActivation(url);
+      console.log(`✅ Tab ${index + 1}: Completed URL: ${url}`, result);
+      resolve({ tabIndex: index + 1, url, ...result });
     });
-    const results = await Promise.all(promises);
-    return results;
-  } finally {
-    if (automation.browser) {
-      await automation.browser.close();
-    }
+
+    promises.push(delayedPromise);
   }
+  console.log('🚀 Starting all delayed tab processes...');
+  const results = await Promise.all(promises);
+  console.log('🎉 All tabs completed:', results);
+  return results;
 }
 
 module.exports = {

@@ -134,8 +134,6 @@ class AppStoreActivationExtractor {
                 urls.add(url);
             }
         }
-
-        // Also search for the pattern across line breaks (in case URLs are wrapped)
         const lines = decodedContent.replace(/[\r\n\s]+/g, ' ').split(' ');
         for (const line of lines) {
             if (line.includes('appstoreconnect.apple.com/activation_ds')) {

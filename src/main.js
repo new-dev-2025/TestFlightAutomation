@@ -3,7 +3,7 @@ const { RunClearInboxAppleID } = require('./ClearInboxMsg');
 const { RunForwardMailToMainMailServer } = require('./ForwardMailServerAutomate');
 const { RunAcceptableInvitationLinkURL } = require('./LoginAutomation');
 const { RunTestFlightScrapper } = require('./TestFlightScraper');
-const { RunAcceptableInviteLinkScrapper } = require('./AcceptInviteTestFlight');
+const { RunAcceptableInviteLinkScrapper } = require('./RunScapperAcceptLinkTestFlight');
 
 const rl = readline.createInterface({
     input: process.stdin,

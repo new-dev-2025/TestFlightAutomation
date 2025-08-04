@@ -3,17 +3,12 @@ const nodemailer = require('nodemailer');
 const { simpleParser } = require('mailparser');
 const accounts = require('../src/data/Account.json');
 
-// Main destination email (like iCloud forwarding)
 const MAIN_EMAIL = 'ebrartelek08@icloud.com';
-
-// Set to track processed messages to avoid duplicates
 const processedMessages = new Set();
 
 function startForwarding(account) {
   const { email, password } = account;
-  
   console.log(`[🚀] Setting up forwarding: ${email} → ${MAIN_EMAIL}`);
-
   const imap = new Imap({
     user: email,
     password: password,
@@ -30,7 +25,6 @@ function startForwarding(account) {
     }
   });
 
-  // SMTP transporter for sending forwarded emails
   const transporter = nodemailer.createTransport({
     host: 'smtp.mail.me.com',
     port: 587,
@@ -74,16 +68,13 @@ function startForwarding(account) {
 
       console.log(`[📬] Monitoring ${email} (${box.messages.total} total messages)`);
 
-      // Process any existing unread messages first
       processExistingUnreadMessages();
 
-      // Listen for new incoming mail
       imap.on('mail', function (numNewMsgs) {
         console.log(`[📨] ${numNewMsgs} new email(s) in ${email}`);
         processNewMessages(numNewMsgs);
       });
 
-      // Handle IMAP errors
       imap.on('error', function (err) {
         console.error(`[❌] IMAP error for ${email}:`, err.message);
         reconnectAfterDelay(account, 30000);
@@ -91,8 +82,6 @@ function startForwarding(account) {
     });
 
     function processExistingUnreadMessages() {
-      console.log(`[🔍] Checking for unread emails in ${email}...`);
-      
       imap.search(['UNSEEN'], function (err, results) {
         if (err) {
           console.error(`[❌] Search error:`, err.message);
@@ -291,7 +280,6 @@ async function verifyConfiguration() {
   return true;
 }
 
-// Graceful shutdown handling
 process.on('SIGINT', function () {
   console.log('\n[🛑] Shutting down email forwarder...');
   console.log('[💾] Processed messages:', processedMessages.size);
@@ -317,12 +305,10 @@ async function RunForwardMailToMainMailServer() {
     await verifyConfiguration();
     
     console.log(`[⚡] Starting forwarders for ${accounts.length} account(s)...`);
-    
-    // Start forwarding for all accounts with staggered connections
     accounts.forEach((account, index) => {
       setTimeout(() => {
         startForwarding(account);
-      }, index * 3000); // 3 second delay between connections
+      }, index * 3000);
     });
     
     console.log('[✅] All email forwarders initiated');
@@ -335,8 +321,8 @@ async function RunForwardMailToMainMailServer() {
   }
 }
 
+RunForwardMailToMainMailServer()
+
 module.exports = {
   RunForwardMailToMainMailServer
 }
-
-RunForwardMailToMainMailServer()

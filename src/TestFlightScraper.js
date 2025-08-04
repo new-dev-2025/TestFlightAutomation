@@ -411,10 +411,6 @@ process.on('SIGINT', () => {
     process.exit(0);
 });
 
-// Run the main function
-if (require.runTestFlightScrapper === module) {
-    runTestFlightScrapper();
-}
 
 module.exports = {
   RunTestFlightScrapper

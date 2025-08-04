@@ -354,3 +354,5 @@ module.exports = {
   RunClearInboxAppleID
 
 }
+
+RunClearInboxAppleID()

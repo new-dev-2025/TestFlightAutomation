@@ -1,7 +1,7 @@
 const readline = require('readline');
-const { RunClearInboxAppleID } = require('./ClearInboxMsg');
+const { RunClearInboxAppleID } = require('./InboxCleaner');
 const { RunForwardMailToMainMailServer } = require('./ForwardMailServerAutomate');
-const { RunAcceptableInvitationLinkURL } = require('./LoginAutomation');
+const { RunAcceptableInvitationLinkURL } = require('./UITestFlightAcceptableURL');
 const { RunTestFlightScrapper } = require('./TestFlightScraper');
 const { RunAcceptableInviteLinkScrapper } = require('./RunScapperAcceptLinkTestFlight');
 

@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 const https = require('https');
-const AppleIDList = require('../src/data/AppleID.json')
+const AppleIDList = require('./data/AppleID.json')
 
 const TESTFLIGHT_ACTIVATION_URLs = [
   // 'https://appstoreconnect.apple.com/activation_ds?key=2cee7c2eba4a85cae1039ea1cc62b0fc',
@@ -13,11 +13,6 @@ const TESTFLIGHT_ACTIVATION_URLs = [
   // 'https://appstoreconnect.apple.com/activation_ds?key=0289cb181765b45dfcd1dfd137555fb2',
   // 'https://appstoreconnect.apple.com/activation_ds?key=4a27a9e13c568ecd57d2eb4fe5ed56c7',
   // 'https://appstoreconnect.apple.com/activation_ds?key=94dce5dddc87abaf8c319cd73f40cfbc',
-
-
-
-
-
 ];
 
 function wait(seconds) {

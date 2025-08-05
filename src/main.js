@@ -18,7 +18,7 @@ async function getInputOptionASOBotAutomation(prompt) {
     });
 }
 
-async function mainASOAutomation() {
+async function mainASOTesflightAutomation() {
     console.log('\n=== ASO TestFlight Automation System ===');
     console.log('0. Terminate');
     console.log('1. Run Chrome UI: Scrape Acceptable TestFlight Invitation URLs');
@@ -50,9 +50,9 @@ async function mainASOAutomation() {
             await RunAcceptableInviteLinkScrapper();
             break;
         default:
-            console.log('Invalid option. Please select 1-6.');
+            console.log('Invalid option. Please select 0-5.');
     }
-    mainASOAutomation();
+    mainASOTesflightAutomation();
 }
 
-mainASOAutomation();
+mainASOTesflightAutomation();

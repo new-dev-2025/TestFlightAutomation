@@ -1,9 +1,10 @@
 const readline = require('readline');
-const { RunClearInboxAppleID } = require('./InboxCleaner');
-const { RunForwardMailToMainMailServer } = require('./ForwardMailServerAutomate');
-const { RunAcceptableInvitationLinkURL } = require('./UITestFlightAcceptableURL');
-const { RunTestFlightScrapper } = require('./TestFlightScraper');
-const { RunAcceptableInviteLinkScrapper } = require('./RunScapperAcceptLinkTestFlight');
+const { RunAcceptableInvitationLinkURL } = require('./botAutomation/UITestFlightAcceptableURL');
+const { RunForwardMailToMainMailServer } = require('./botAutomation/ForwardMailServerAutomate');
+const { RunClearInboxAppleID } = require('./botAutomation/InboxCleaner');
+const { RunTestFlightScrapper } = require('./botAutomation/TestFlightScraper');
+const { RunAcceptableInviteLinkScrapper } = require('./botAutomation/RunScapperAcceptLinkTestFlight');
+
 
 const rl = readline.createInterface({
     input: process.stdin,

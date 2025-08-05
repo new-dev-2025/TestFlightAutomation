@@ -1,7 +1,7 @@
 const puppeteer = require('puppeteer');
 const https = require('https');
-const AppleIDList = require('./data/AppleID.json');
-const { loadActivationLinks } = require('./utils/loader');
+const AppleIDList = require('../data/AppleID.json');
+const { loadActivationLinks } = require('../utils/ActivateLinkLoader');
 
 // const TESTFLIGHT_ACTIVATION_URLs = [
 //   'https://appstoreconnect.apple.com/activation_ds?key=aae0cc3458af1de6032ff551a93743e4',

@@ -40,16 +40,12 @@ function startForwarding(account) {
     maxConnections: 5,
     maxMessages: 100
   });
-
-  // Test SMTP connection first
   transporter.verify(function (error, success) {
     if (error) {
       console.error(`[❌] SMTP failed for ${email}:`, error.message);
       return;
     }
     console.log(`[✅] SMTP ready for ${email}`);
-    
-    // Start IMAP connection after SMTP is verified
     imap.connect();
   });
 
@@ -65,11 +61,8 @@ function startForwarding(account) {
         console.error(`[❌] Inbox error for ${email}:`, err.message);
         return;
       }
-
       console.log(`[📬] Monitoring ${email} (${box.messages.total} total messages)`);
-
       processExistingUnreadMessages();
-
       imap.on('mail', function (numNewMsgs) {
         console.log(`[📨] ${numNewMsgs} new email(s) in ${email}`);
         processNewMessages(numNewMsgs);
@@ -98,7 +91,6 @@ function startForwarding(account) {
     }
 
     function processNewMessages(numNewMsgs) {
-      // Get the latest messages
       imap.status('INBOX', (err, mailbox) => {
         if (err) {
           console.error(`[❌] Status error:`, err.message);
@@ -120,7 +112,7 @@ function startForwarding(account) {
       const fetch = imap.fetch(range, {
         bodies: '',
         struct: true,
-        markSeen: false // Keep original read status
+        markSeen: false
       });
 
       fetch.on('message', function (msg, seqno) {
@@ -139,7 +131,6 @@ function startForwarding(account) {
                 return;
               }
 
-              // Create unique identifier to avoid duplicates
               const msgIdentifier = `${email}-${parsed.messageId || seqno}-${parsed.date}`;
               
               if (processedMessages.has(msgIdentifier)) {
@@ -173,11 +164,7 @@ function startForwarding(account) {
         const originalFrom = parsed.from ? (parsed.from.text || parsed.from.address || 'Unknown') : 'Unknown Sender';
         const originalSubject = parsed.subject || '(No Subject)';
         const originalDate = parsed.date || new Date();
-        
-        // Create clean forwarded subject (like iCloud forwarding)
         const forwardedSubject = `Fwd: ${originalSubject}`;
-        
-        // Create forwarded content that looks like native forwarding
         const forwardHeader = `\n\n---------- Forwarded message ----------\n` +
                              `From: ${originalFrom}\n` +
                              `Date: ${originalDate}\n` +
@@ -226,8 +213,6 @@ function startForwarding(account) {
         
       } catch (error) {
         console.error(`[❌] Forward failed for ${fromEmail}:`, error.message);
-        
-        // Log specific error details
         if (error.code === 'EAUTH') {
           console.error(`[🔐] Authentication failed for ${fromEmail} - check credentials`);
         } else if (error.code === 'ECONNECTION') {
@@ -275,7 +260,6 @@ async function verifyConfiguration() {
       process.exit(1);
     }
   }
-  
   console.log('[✅] Configuration valid');
   return true;
 }
@@ -295,7 +279,6 @@ process.on('unhandledRejection', function (reason, promise) {
   console.error('[💥] Unhandled Rejection:', reason);
 });
 
-// Main application
 async function RunForwardMailToMainMailServer() {
   try {
     console.log('='.repeat(60));
@@ -321,7 +304,7 @@ async function RunForwardMailToMainMailServer() {
   }
 }
 
-RunForwardMailToMainMailServer()
+// RunForwardMailToMainMailServer()
 
 module.exports = {
   RunForwardMailToMainMailServer

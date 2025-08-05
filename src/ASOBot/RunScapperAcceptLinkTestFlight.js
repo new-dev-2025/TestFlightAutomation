@@ -100,36 +100,22 @@ class AppStoreActivationExtractor {
         };
 
         const decodedContent = decodeHtml(content);
-
-        // FOCUSED PATTERN: Only look for activation_ds links with key parameter
         const activationPatterns = [
-            // Pattern 1: activation_ds with key parameter (your example format)
             /https:\/\/appstoreconnect\.apple\.com\/activation_ds\?key=[a-f0-9]{32}/gi,
-            
-            // Pattern 2: activation_ds with key parameter in HTML links
             /<a[^>]+href=["'](https:\/\/appstoreconnect\.apple\.com\/activation_ds\?key=[a-f0-9]{32})["'][^>]*>/gi,
-            
-            // Pattern 3: More flexible key format (in case keys vary in length/format)
             /https:\/\/appstoreconnect\.apple\.com\/activation_ds\?key=[a-f0-9]+/gi,
-            
-            // Pattern 4: URL encoded versions
             /https:\/\/appstoreconnect\.apple\.com\/activation_ds\?key%3D[a-f0-9]+/gi,
         ];
 
-        // Apply activation patterns
         for (const pattern of activationPatterns) {
             let match;
             while ((match = pattern.exec(decodedContent)) !== null) {
                 let url;
                 if (match[1]) {
-                    // From HTML href attribute
                     url = decodeHtml(match[1]);
                 } else {
-                    // Direct URL match
                     url = decodeHtml(match[0]);
                 }
-                
-                // Clean up URL encoding
                 url = url.replace(/key%3D/g, 'key=');
                 urls.add(url);
             }
@@ -143,7 +129,6 @@ class AppStoreActivationExtractor {
                 }
             }
         }
-
         return Array.from(urls);
     }
 
@@ -156,8 +141,6 @@ class AppStoreActivationExtractor {
                 }
 
                 console.log(`📧 Inbox has ${box.messages.total} total messages`);
-
-                // Check more emails to find activation links
                 const recentCount = Math.min(300, box.messages.total);
                 const start = Math.max(1, box.messages.total - recentCount + 1);
                 const end = box.messages.total;
@@ -233,7 +216,7 @@ class AppStoreActivationExtractor {
                             setTimeout(checkComplete, 500);
                         }
                     };
-                    
+
                     setTimeout(checkComplete, 2000);
                 });
             });
@@ -248,7 +231,6 @@ class AppStoreActivationExtractor {
     }
 }
 
-// Main runner
 async function RunAcceptableInviteLinkScrapper() {
     console.log('🎯 App Store Connect Activation Link Extractor');
     console.log('   Target: https://appstoreconnect.apple.com/activation_ds?key=...');
@@ -266,11 +248,9 @@ async function RunAcceptableInviteLinkScrapper() {
         const urlData = await extractor.processEmails();
 
         if (urlData.length > 0) {
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0] + '_' + 
-                              new Date().toTimeString().split(' ')[0].replace(/:/g, '');
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0] + '_' +
+                new Date().toTimeString().split(' ')[0].replace(/:/g, '');
             const filename = `ActivationLinks_${timestamp}.txt`;
-
-            // Save only the links to file
             let content = '';
             urlData.forEach((item) => {
                 content += `${item.url}\n`;
@@ -278,13 +258,11 @@ async function RunAcceptableInviteLinkScrapper() {
 
             fs.writeFileSync(filename, content, 'utf8');
             console.log(`\n💾 Links saved to: ${filename}`);
-            
-            // Display only the links
             console.log('\n🔗 Found Links:');
             urlData.forEach((item) => {
                 console.log(item.url);
             });
-            
+
         } else {
             console.log('\n❌ No activation_ds links found');
             console.log('\n💡 Troubleshooting:');
@@ -319,4 +297,4 @@ module.exports = {
 }
 
 
-RunAcceptableInviteLinkScrapper()
+// RunAcceptableInviteLinkScrapper()

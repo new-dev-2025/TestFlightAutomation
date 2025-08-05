@@ -457,4 +457,4 @@ module.exports = {
   getVerificationCode
 };
 
-RunAcceptableInvitationLinkURL()
+// RunAcceptableInvitationLinkURL()

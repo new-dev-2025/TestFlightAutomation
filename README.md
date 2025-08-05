@@ -5,11 +5,11 @@
 ---
 
 ## 📁 Setup environment
-   - git clone git@github.com:xiaoma6869Pro/TestFlightAutomation.git
-   - sh ctr.sh
+```bash
+   ├── git clone git@github.com:xiaoma6869Pro/TestFlightAutomation.git
+   ├── sh ctr.sh
 
 ## 📁 Project Structure
-
 ```bash
 📦 TestFlight_Automation/
 ├── 🎯 src/

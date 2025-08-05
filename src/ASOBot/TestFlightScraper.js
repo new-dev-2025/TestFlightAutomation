@@ -85,41 +85,126 @@ class TestFlightExtractor {
     }
 
     extractAppName(subject, content) {
-        let match = subject.match(/(.+?)\s+has invited you to test/i);
-        if (match) return match[1].trim();
+        let appName = null;
+        let developerName = null;
 
-        match = subject.match(/invited to test\s+(.+)/i);
-        if (match) return match[1].trim();
-        
-        match = subject.match(/TestFlight[:\s]+(.+)/i);
-        if (match) return match[1].trim();
-        match = subject.match(/(.+?)\s+for iOS/i);
-        if (match) return match[1].trim();
-
-        match = subject.match(/By\s+(.+?)\s+ANASRE/i);
-        if (match) return match[1].trim();
         if (content) {
-            match = content.match(/app-name['"]\s*:\s*['"]([^'"]+)['"]/i);
-            if (match) return match[1].trim();
-            
-            match = content.match(/application['"]\s*:\s*['"]([^'"]+)['"]/i);
-            if (match) return match[1].trim();
+            const htmlPatterns = [
+                /<span[^>]*style="[^"]*font-family:[^"]*apple-system[^"]*"[^>]*>([^<]+)<\/span>/i,
+                /<div[^>]*style="[^"]*font-family:[^"]*apple-system[^"]*"[^>]*>([^<]+)<\/div>\s*<div[^>]*>By\s+[^<]+\s+for\s+iOS/i,
+                /alt="([^,]+),\s*app\s+icon"/i,
+                /aria-label="([^"]+?)\s+for\s+iOS"/i,
+                /<h2[^>]*aria-label="([^"]+?)\s+for\s+iOS"/i,
+                /<[^>]*style="[^"]*font-size:\s*24px[^"]*"[^>]*>([^<]+)<\/[^>]*>/i,
+                /app-name['"]\s*:\s*['"]([^'"]+)['"]/i,
+                /application['"]\s*:\s*['"]([^'"]+)['"]/i,
+                /<title[^>]*>([^<]+TestFlight[^<]*)<\/title>/i,
+                /You're invited to test\s+([^.]+)/i,
+                /To test this app,.*?([A-Za-z][A-Za-z0-9\s]{2,30}),\s*you agree/i,
+                /By using\s+([A-Za-z][A-Za-z0-9\s]{2,30}),\s*you agree/i,
+            ];
+
+            for (const pattern of htmlPatterns) {
+                const match = content.match(pattern);
+                if (match && match[1]) {
+                    let extractedName = match[1].trim();
+                    
+                    extractedName = extractedName.replace(/\b(TestFlight|invited|test|you|to|has|been|the|beta|join)\b/gi, '').trim();
+                    extractedName = extractedName.replace(/\s+for\s+iOS$/i, '').trim();
+                    
+                    if (extractedName.length > 0 && extractedName.length < 100 && /[A-Za-z]/.test(extractedName)) {
+                        extractedName = extractedName.replace(/&[a-zA-Z0-9#]+;/g, '');
+                        appName = extractedName;
+                        break;
+                    }
+                }
+            }
+
+            const developerPatterns = [
+                /By\s+([A-Za-z][A-Za-z0-9\s]{2,50}?)\s+for\s+iOS/i,
+                /By\s+([A-Za-z][A-Za-z0-9\s]{2,50}?)\s+(?:ANASRE|Inc|LLC|Ltd|Corporation|Co\.)/i,
+                /By\s+([A-Za-z][A-Za-z0-9\s]{2,50}?)(?:\s|<|$)/i,
+            ];
+
+            for (const pattern of developerPatterns) {
+                const match = content.match(pattern);
+                if (match && match[1]) {
+                    let extractedDev = match[1].trim();
+                    extractedDev = extractedDev.replace(/\b(for|iOS|the|and|&)\b/gi, '').trim();
+                    if (extractedDev.length > 0 && extractedDev.length < 50) {
+                        developerName = extractedDev;
+                        break;
+                    }
+                }
+            }
         }
 
-        const cleanSubject = subject.replace(/TestFlight|invited|test|you|to|for|iOS|has|been/gi, '').trim();
-        if (cleanSubject.length > 0 && cleanSubject.length < 50) {
+        if (!appName) {
+            const subjectPatterns = [
+                /(.+?)\s+has invited you to test/i,
+                /invited to test\s+(.+?)(?:\s+on\s+TestFlight)?$/i,
+                /TestFlight[:\s]+(.+?)(?:\s+for\s+iOS)?$/i,
+                /(.+?)\s+for iOS/i,
+                /Join the\s+(.+?)\s+beta/i,
+                /(.+?)\s*-\s*TestFlight/i,
+                /Start testing\s+(.+)/i,
+                /(.+?)\s+is ready for beta testing/i,
+            ];
+
+            for (const pattern of subjectPatterns) {
+                const match = subject.match(pattern);
+                if (match && match[1]) {
+                    let extractedName = match[1].trim();
+                    extractedName = extractedName.replace(/\b(TestFlight|invited|test|you|to|for|iOS|has|been|the|beta|join)\b/gi, '').trim();
+                    if (extractedName.length > 0 && extractedName.length < 100 && /[A-Za-z]/.test(extractedName)) {
+                        appName = extractedName;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (developerName && appName) {
+            if (!appName.toLowerCase().includes(developerName.toLowerCase())) {
+                return `${developerName} + ${appName}`;
+            } else {
+                return appName;
+            }
+        }
+
+        if (developerName && !appName) {
+            return `${developerName} + App`;
+        }
+
+        if (appName) {
+            return appName;
+        }
+
+        let cleanSubject = subject
+            .replace(/\b(TestFlight|invited|test|you|to|for|iOS|has|been|join|beta|start|testing)\b/gi, '')
+            .replace(/[^\w\s-]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        if (cleanSubject.length > 0 && cleanSubject.length < 100 && /[A-Za-z]/.test(cleanSubject)) {
             return cleanSubject;
         }
+
         return 'Unknown App';
     }
 
     extractTestFlightUrls(content) {
         if (!content) return [];
+        
         const patterns = [
             /href=["']([^"']*testflight\.apple\.com\/v1\/invite\/[A-Za-z0-9a-f]+[^"']*?)["']/gi,
             /href=["']([^"']*testflight\.apple\.com\/join\/[A-Za-z0-9]+[^"']*?)["']/gi,
             /(https:\/\/testflight\.apple\.com\/v1\/invite\/[A-Za-z0-9a-f]+[^\s<>"'\)]*)/gi,
             /(https:\/\/testflight\.apple\.com\/join\/[A-Za-z0-9]+[^\s<>"'\)]*)/gi,
+            /(https%3A%2F%2Ftestflight\.apple\.com%2Fv1%2Finvite%2F[A-Za-z0-9a-f%]+)/gi,
+            /(https%3A%2F%2Ftestflight\.apple\.com%2Fjoin%2F[A-Za-z0-9%]+)/gi,
+            /(testflight\.apple\.com\/v1\/invite\/[A-Za-z0-9a-f]+[^\s<>"'\)]*)/gi,
+            /(testflight\.apple\.com\/join\/[A-Za-z0-9]+[^\s<>"'\)]*)/gi,
         ];
 
         const urls = new Set();
@@ -128,36 +213,42 @@ class TestFlightExtractor {
             let match;
             while ((match = pattern.exec(content)) !== null) {
                 let url = match[1] || match[0];
-                url = url.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+                
+                url = decodeURIComponent(url);
+                
+                url = url.replace(/&amp;/g, '&')
+                        .replace(/&lt;/g, '<')
+                        .replace(/&gt;/g, '>')
+                        .replace(/&quot;/g, '"');
+                
+                if (!url.startsWith('http')) {
+                    url = 'https://' + url;
+                }
+                
                 url = url.replace(/[.,;:!?)\]}>'"]+$/, '');
-                if (url && 
-                    url.includes('testflight.apple.com') && 
-                    url.length > 50 &&
-                    !url.endsWith('=') &&
-                    (url.includes('/v1/invite/') || url.includes('/join/')) &&
-                    !url.includes('...')
-                ) {
+                
+                if (this.isValidTestFlightUrl(url)) {
                     urls.add(url);
                 }
             }
         });
 
-        const urlArray = Array.from(urls);
-        const cleanUrls = [];
-        
-        urlArray.forEach(url => {
-            const isTruncated = urlArray.some(otherUrl => 
-                otherUrl !== url && 
-                otherUrl.startsWith(url) && 
-                otherUrl.length > url.length
-            );
-            
-            if (!isTruncated) {
-                cleanUrls.push(url);
-            }
-        });
+        return Array.from(urls);
+    }
 
-        return cleanUrls;
+    isValidTestFlightUrl(url) {
+        if (!url || !url.includes('testflight.apple.com')) return false;
+        
+        if (!url.includes('/v1/invite/') && !url.includes('/join/')) return false;
+        
+        if (url.length < 50) return false;
+        
+        if (url.endsWith('=') || url.includes('...')) return false;
+        
+        const hasValidCode = url.match(/[A-Za-z0-9a-f]{8,}/);
+        if (!hasValidCode) return false;
+        
+        return true;
     }
 
     async processEmails() {
@@ -170,7 +261,7 @@ class TestFlightExtractor {
 
                 console.log(`📧 Inbox has ${box.messages.total} total messages`);
 
-                const recentCount = Math.min(50, box.messages.total);
+                const recentCount = Math.min(200, box.messages.total);
                 const start = Math.max(1, box.messages.total - recentCount + 1);
                 const end = box.messages.total;
 
@@ -184,9 +275,10 @@ class TestFlightExtractor {
                 const foundUrls = [];
                 let processedCount = 0;
                 let emailsWithUrls = 0;
+                const totalEmails = end - start + 1;
 
                 f.on('message', (msg, seqno) => {
-                    console.log(`📧 Processing email ${seqno}/${end}...`);
+                    console.log(`📧 Processing email ${processedCount + 1}/${totalEmails}...`);
 
                     msg.on('body', (stream, info) => {
                         let buffer = '';
@@ -199,33 +291,36 @@ class TestFlightExtractor {
                             simpleParser(buffer)
                                 .then(parsed => {
                                     const subject = parsed.subject || 'No Subject';
-                                    console.log(`   📋 Subject: ${subject.substring(0, 50)}...`);
-
-                                    let allContent = '';
-                                    if (parsed.html) allContent += parsed.html;
-                                    if (parsed.text) allContent += parsed.text;
                                     
-                                    allContent += buffer;
+                                    if (this.isTestFlightEmail(subject, buffer)) {
+                                        console.log(`   📋 TestFlight: ${subject.substring(0, 60)}...`);
 
-                                    const urls = this.extractTestFlightUrls(allContent);
+                                        let allContent = '';
+                                        if (parsed.html) allContent += parsed.html;
+                                        if (parsed.text) allContent += parsed.text;
+                                        allContent += buffer;
 
-                                    if (urls.length > 0) {
-                                        console.log(`   🎉 Found ${urls.length} TestFlight URL(s)!`);
-                                        
-                                        urls.forEach(url => {
-                                            const appName = this.extractAppName(subject, allContent);
-                                            foundUrls.push({
-                                                url: url,
-                                                appName: appName,
-                                                subject: subject
+                                        const urls = this.extractTestFlightUrls(allContent);
+
+                                        if (urls.length > 0) {
+                                            console.log(`   🎉 Found ${urls.length} TestFlight URL(s)!`);
+                                            
+                                            urls.forEach(url => {
+                                                const appName = this.extractAppName(subject, allContent);
+                                                foundUrls.push({
+                                                    url: url,
+                                                    appName: appName,
+                                                    subject: subject,
+                                                    date: parsed.date
+                                                });
+                                                console.log(`   📱 ${appName}: ${url.substring(0, 80)}...`);
                                             });
-                                            console.log(`   📱 ${appName}: ${url}`);
-                                        });
-                                        emailsWithUrls++;
-                                    } else if (allContent.toLowerCase().includes('testflight')) {
-                                        console.log('   🔍 TestFlight email but no URLs found');
+                                            emailsWithUrls++;
+                                        } else {
+                                            console.log('   🔍 TestFlight email but no valid URLs found');
+                                        }
                                     } else {
-                                        console.log('   ℹ️ Not a TestFlight email');
+                                        console.log(`   ⏭️  Skipping non-TestFlight email`);
                                     }
 
                                     processedCount++;
@@ -233,18 +328,21 @@ class TestFlightExtractor {
                                 .catch(parseErr => {
                                     console.log(`   ❌ Parse error: ${parseErr.message}`);
                                     
-                                    const urls = this.extractTestFlightUrls(buffer);
-                                    if (urls.length > 0) {
-                                        console.log(`   🎉 Found ${urls.length} URL(s) in raw content!`);
-                                        urls.forEach(url => {
-                                            const appName = this.extractAppName('Raw Email', buffer);
-                                            foundUrls.push({
-                                                url: url,
-                                                appName: appName,
-                                                subject: 'Raw Email'
+                                    if (this.isTestFlightEmail('', buffer)) {
+                                        const urls = this.extractTestFlightUrls(buffer);
+                                        if (urls.length > 0) {
+                                            console.log(`   🎉 Found ${urls.length} URL(s) in raw content!`);
+                                            urls.forEach(url => {
+                                                const appName = this.extractAppName('Raw Email', buffer);
+                                                foundUrls.push({
+                                                    url: url,
+                                                    appName: appName,
+                                                    subject: 'Raw Email',
+                                                    date: new Date()
+                                                });
                                             });
-                                        });
-                                        emailsWithUrls++;
+                                            emailsWithUrls++;
+                                        }
                                     }
                                     
                                     processedCount++;
@@ -261,13 +359,28 @@ class TestFlightExtractor {
                     setTimeout(() => {
                         console.log(`\n📊 Processing Summary:`);
                         console.log(`   📧 Emails processed: ${processedCount}`);
-                        console.log(`   ✅ Emails with URLs: ${emailsWithUrls}`);
+                        console.log(`   ✅ TestFlight emails with URLs: ${emailsWithUrls}`);
                         
                         resolve(foundUrls);
-                    }, 2000);
+                    }, 3000);
                 });
             });
         });
+    }
+
+    isTestFlightEmail(subject, content) {
+        const testFlightKeywords = [
+            'testflight',
+            'test flight',
+            'invited to test',
+            'join the beta',
+            'beta test',
+            'app store connect',
+            'testflight.apple.com'
+        ];
+
+        const text = (subject + ' ' + content).toLowerCase();
+        return testFlightKeywords.some(keyword => text.includes(keyword));
     }
 
     disconnect() {
@@ -279,12 +392,11 @@ class TestFlightExtractor {
 }
 
 async function RunTestFlightScrapper() {
-    console.log('🍎 Node.js TestFlight URL Extractor');
-    console.log('=' .repeat(40));
-    console.log();
-
+    console.log('🍎 Enhanced TestFlight URL Extractor');
+    console.log('=' .repeat(50));
+    
     const extractor = new TestFlightExtractor();
-
+    
     try {
         const username = await extractor.getUserInput('📧 iCloud email: ');
         const password = await extractor.getPassword('🔐 App-specific password: ');
@@ -293,41 +405,48 @@ async function RunTestFlightScrapper() {
         if (!connected) {
             return;
         }
-
+        
         const urlData = await extractor.processEmails();
-
+        
         const appGroups = {};
         urlData.forEach(item => {
             const url = item.url;
-            if (url.length > 50 && 
-                !url.endsWith('=') && 
-                !url.includes('...') && 
-                (url.includes('/v1/invite/') || url.includes('/join/')) &&
-                url.match(/[A-Za-z0-9a-f]{8,}/)) {
-                
-                const appName = item.appName;
-                if (!appGroups[appName]) {
-                    appGroups[appName] = new Set();
-                }
-                appGroups[appName].add(url);
+            const appName = item.appName;
+            
+            if (!appGroups[appName]) {
+                appGroups[appName] = {
+                    urls: new Set(),
+                    subjects: new Set(),
+                    dates: []
+                };
             }
+            
+            appGroups[appName].urls.add(url);
+            appGroups[appName].subjects.add(item.subject);
+            appGroups[appName].dates.push(item.date);
         });
 
-        const totalValidUrls = Object.values(appGroups).reduce((sum, urls) => sum + urls.size, 0);
+        const totalValidUrls = Object.values(appGroups).reduce((sum, group) => sum + group.urls.size, 0);
 
-        console.log(`\n🎯 RESULTS:`);
-        console.log(`🔗 Raw URLs found: ${urlData.length}`);
-        console.log(`✅ Valid TestFlight URLs: ${totalValidUrls}`);
-        console.log(`📱 Apps found: ${Object.keys(appGroups).length}`);
+        console.log(`\n🎯 FINAL RESULTS:`);
+        console.log(`🔗 Total URLs found: ${urlData.length}`);
+        console.log(`✅ Unique TestFlight URLs: ${totalValidUrls}`);
+        console.log(`📱 Apps discovered: ${Object.keys(appGroups).length}`);
 
         if (totalValidUrls > 0) {
-            console.log(`\n📱 TestFlight URLs by App:`);
-            console.log('='.repeat(70));
+            console.log(`\n📱 TestFlight URLs Grouped by App:`);
+            console.log('='.repeat(80));
             
             Object.keys(appGroups).sort().forEach(appName => {
-                const urls = Array.from(appGroups[appName]);
-                console.log(`\n🎮 ${appName} (${urls.length} URL${urls.length > 1 ? 's' : ''})`);
-                urls.forEach(url => {
+                const group = appGroups[appName];
+                const urls = Array.from(group.urls);
+                const subjects = Array.from(group.subjects);
+                
+                console.log(`\n🎮 ${appName}`);
+                console.log(`   📊 URLs: ${urls.length} | Emails: ${subjects.length}`);
+                console.log(`   📅 Latest: ${Math.max(...group.dates.map(d => new Date(d).getTime()))}`);
+                
+                urls.forEach((url) => {
                     console.log(`   🔗 ${url}`);
                 });
             });
@@ -336,27 +455,40 @@ async function RunTestFlightScrapper() {
                              new Date().toTimeString().split(' ')[0].replace(/:/g, '');
             const filename = `testflight_apps_${timestamp}.txt`;
 
-            let content = 'TestFlight URLs by App\n' + '='.repeat(25) + '\n\n';
+            let content = `TestFlight URLs Grouped by App\n`;
+            content += `Generated: ${new Date().toLocaleString()}\n`;
+            content += `Total Apps: ${Object.keys(appGroups).length}\n`;
+            content += `Total URLs: ${totalValidUrls}\n`;
+            content += '='.repeat(50) + '\n\n';
+            
             Object.keys(appGroups).sort().forEach(appName => {
-                const urls = Array.from(appGroups[appName]);
-                content += `${appName} (${urls.length} URL${urls.length > 1 ? 's' : ''})\n`;
-                content += '-'.repeat(appName.length + 10) + '\n';
-                urls.forEach(url => {
-                    content += `${url}\n`;
+                const group = appGroups[appName];
+                const urls = Array.from(group.urls);
+                
+                content += `${appName}\n`;
+                content += `-`.repeat(Math.min(appName.length, 50)) + '\n';
+                content += `URLs: ${urls.length}\n`;
+                urls.forEach((url) => {
+                     content += `${url}\n`;
                 });
                 content += '\n';
             });
 
             fs.writeFileSync(filename, content, 'utf8');
-            console.log(`\n💾 URLs saved to: ${filename}`);
-            console.log(`🚀 Click these URLs to join TestFlight betas!`);
+            console.log(`\n💾 Results saved to: ${filename}`);
+            console.log(`🚀 Click any URL above to join TestFlight betas!`);
+            
         } else {
             console.log('\n❌ No TestFlight URLs found');
-            console.log('💡 Make sure you have TestFlight invitation emails in your inbox');
+            console.log('💡 Tips:');
+            console.log('   - Check if you have TestFlight invitation emails');
+            console.log('   - Try increasing the email count in the code');
+            console.log('   - Check your email filters/spam folder');
         }
 
     } catch (error) {
         console.log(`\n❌ Error: ${error.message}`);
+        console.log('💡 Check your internet connection and credentials');
     } finally {
         extractor.disconnect();
     }
@@ -368,5 +500,5 @@ process.on('SIGINT', () => {
 });
 
 module.exports = {
-  RunTestFlightScrapper
-}
+    RunTestFlightScrapper
+};

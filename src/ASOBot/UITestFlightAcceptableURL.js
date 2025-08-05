@@ -2,6 +2,7 @@ const puppeteer = require('puppeteer');
 const https = require('https');
 const AppleIDList = require('../data/AppleID.json');
 const { loadActivationLinks } = require('../utils/ActivateLinkLoader');
+const { getApiSmsUrl } = require('../utils/EnvLoader');
 
 function wait(seconds) {
   return new Promise(resolve => setTimeout(resolve, seconds * 1));
@@ -32,7 +33,7 @@ function makeHttpRequest(url) {
 }
 
 async function getVerificationCode(smsCode) {
-  const response = await makeHttpRequest(`https://lixsms.com/message/?code=${smsCode}`);
+  const response = await makeHttpRequest(`${getApiSmsUrl()}${smsCode}`);
   if (response.statusCode !== 200) return null;
   const jsonData = JSON.parse(response.body);
   if (jsonData.message && jsonData.message[0] && jsonData.message[0].body) {
@@ -49,7 +50,6 @@ class FullyAutomatedTestFlight {
     this.page = null;
     this.accountInfo = null;
   }
-
 
   async runSingleActivation(activationUrl) {
     await this.navigateToActivation(activationUrl);

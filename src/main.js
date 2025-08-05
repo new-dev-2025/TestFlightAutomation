@@ -23,7 +23,7 @@ async function showMenu() {
     console.log('\n1. Run ChromeUI Acceptable Invitation TestFlight URL Scrapper');
     console.log('2. Forward Sub Mail To Main Server');
     console.log('3. Clear AppleID Inbox');
-    console.log('4. Scrapper TestFlight From Main Mail Server');
+    console.log('4. Scrapper TestFlight Link From Main Mail Server');
     console.log('5. Run Scrapper Fetch Acceptable Invitable Link From Main Server');
     console.log('6. Exit');
 

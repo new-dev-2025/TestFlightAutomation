@@ -1,8 +1,8 @@
 const puppeteer = require('puppeteer');
 const https = require('https');
-const AppleIDList = require('@/data/AppleID.json');
-const { loadActivationLinks } = require('@/utils/ActivateLinkLoader');
-const { getApiSmsUrl } = require('@/utils/EnvLoader');
+const AppleIDList = require('../data/AppleID.json');
+const { loadActivationLinks } = require('../utils/ActivateLinkLoader');
+const { getApiSmsUrl } = require('../utils/EnvLoader');
 
 function wait(seconds) {
   return new Promise(resolve => setTimeout(resolve, seconds * 1));

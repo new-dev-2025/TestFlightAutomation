@@ -1,19 +1,20 @@
 const puppeteer = require('puppeteer');
 const https = require('https');
-const AppleIDList = require('./data/AppleID.json')
+const AppleIDList = require('./data/AppleID.json');
+const { loadActivationLinks } = require('./utils/loader');
 
-const TESTFLIGHT_ACTIVATION_URLs = [
-  // 'https://appstoreconnect.apple.com/activation_ds?key=2cee7c2eba4a85cae1039ea1cc62b0fc',
-  // 'https://appstoreconnect.apple.com/activation_ds?key=2c91a43e15c632c1567f4425b770bc2b',
-  // 'https://appstoreconnect.apple.com/activation_ds?key=1484da23ae10c55ff8baab3901c0d227',
-  // 'https://appstoreconnect.apple.com/activation_ds?key=dac9e135c17aa125092a835509bdedb6',
-  // 'https://appstoreconnect.apple.com/activation_ds?key=3eef080a991b7b5eeb9a14021872e69e',
-  // 'https://appstoreconnect.apple.com/activation_ds?key=7e49667d630988995fcb646eaa2715f2',
-  // 'https://appstoreconnect.apple.com/activation_ds?key=02892ba70296f327513aa6b6a9fc02ec',
-  // 'https://appstoreconnect.apple.com/activation_ds?key=0289cb181765b45dfcd1dfd137555fb2',
-  // 'https://appstoreconnect.apple.com/activation_ds?key=4a27a9e13c568ecd57d2eb4fe5ed56c7',
-  // 'https://appstoreconnect.apple.com/activation_ds?key=94dce5dddc87abaf8c319cd73f40cfbc',
-];
+// const TESTFLIGHT_ACTIVATION_URLs = [
+//   'https://appstoreconnect.apple.com/activation_ds?key=aae0cc3458af1de6032ff551a93743e4',
+//   'https://appstoreconnect.apple.com/activation_ds?key=0289cb181765b45dfcd1dfd137555fb2',
+//   'https://appstoreconnect.apple.com/activation_ds?key=2c91a43e15c632c1567f4425b770bc2b',
+//   'https://appstoreconnect.apple.com/activation_ds?key=9eb7de57e497fd739bd23d22671fc1ad',
+//   'https://appstoreconnect.apple.com/activation_ds?key=87ef8ddbf716a5069e9a2c5155c45899',
+//   'https://appstoreconnect.apple.com/activation_ds?key=bb58e5c689b01dd43df680a659044cf3',
+//   'https://appstoreconnect.apple.com/activation_ds?key=edb7f39ef0a36e6ae345282c103dc56f',
+//   'https://appstoreconnect.apple.com/activation_ds?key=cb60a34ef023cce2c7360d458f7a7c21',
+//   'https://appstoreconnect.apple.com/activation_ds?key=96a661a2a845b54bae2015e84deb4848',
+
+// ];
 
 function wait(seconds) {
   return new Promise(resolve => setTimeout(resolve, seconds * 1));
@@ -422,8 +423,9 @@ async function RunAcceptableInvitationLinkURL() {
   const automation = new FullyAutomatedTestFlight();
   await automation.launchBrowser();
   const promises = [];
-  for (let index = 0; index < TESTFLIGHT_ACTIVATION_URLs.length; index++) {
-    const url = TESTFLIGHT_ACTIVATION_URLs[index];
+  const links = loadActivationLinks('ActivationLinks.txt');
+  for (let index = 0; index < links.length; index++) {
+    const url = links[index];
     const delayedPromise = new Promise(async (resolve) => {
       const delayTime = index * 60000;
       if (delayTime > 0) {

@@ -10,7 +10,6 @@ async function getInputOptionASOBotAutomation(prompt) {
         input: process.stdin,
         output: process.stdout
     });
-
     return new Promise((resolve) => {
         rl.question(prompt, (answer) => {
             rl.close();
@@ -20,17 +19,21 @@ async function getInputOptionASOBotAutomation(prompt) {
 }
 
 async function mainASOAutomation() {
-    console.log('\n1. Run ChromeUI Acceptable Invitation TestFlight URL Scrapper');
-    console.log('2. Forward Sub Mail To Main Server');
-    console.log('3. Clear AppleID Inbox');
-    console.log('4. Scrapper TestFlight Link From Main Mail Server');
-    console.log('5. Run Scrapper Fetch Acceptable Invitable Link From Main Server');
-    console.log('6. Exit');
+    console.log('\n=== ASO TestFlight Automation System ===');
+    console.log('0. Exit');
+    console.log('1. Run Chrome UI: Scrape Acceptable TestFlight Invitation URLs');
+    console.log('2. Forward Sub Mail to Main Server');
+    console.log('3. Clear Apple ID Inbox');
+    console.log('4. Scrape TestFlight Links from Main Mail Server');
+    console.log('5. Fetch Acceptable Invitable Links from Main Server');
 
     const optionInput = await getInputOptionASOBotAutomation('Select (1-6): ');
     const choice = parseInt(optionInput);
 
     switch (choice) {
+        case 0:
+            console.log('Goodby..........');
+            process.exit(0);
         case 1:
             await RunAcceptableInvitationLinkURL();
             break;
@@ -46,9 +49,6 @@ async function mainASOAutomation() {
         case 5:
             await RunAcceptableInviteLinkScrapper();
             break;
-        case 6:
-            console.log('Exiting...');
-            process.exit(0);
         default:
             console.log('Invalid option. Please select 1-6.');
     }

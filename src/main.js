@@ -5,7 +5,7 @@ const { RunClearInboxAppleID } = require('./ASOBot/InboxCleaner');
 const { RunTestFlightScrapper } = require('./ASOBot/TestFlightScraper');
 const { RunAcceptableInviteLinkScrapper } = require('./ASOBot/RunScapperAcceptLinkTestFlight');
 
-async function getOptionInput(prompt) {
+async function getInputOptionASOBotAutomation(prompt) {
     const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout
@@ -19,7 +19,7 @@ async function getOptionInput(prompt) {
     });
 }
 
-async function showMenu() {
+async function mainASOAutomation() {
     console.log('\n1. Run ChromeUI Acceptable Invitation TestFlight URL Scrapper');
     console.log('2. Forward Sub Mail To Main Server');
     console.log('3. Clear AppleID Inbox');
@@ -27,7 +27,7 @@ async function showMenu() {
     console.log('5. Run Scrapper Fetch Acceptable Invitable Link From Main Server');
     console.log('6. Exit');
 
-    const optionInput = await getOptionInput('Select (1-6): ');
+    const optionInput = await getInputOptionASOBotAutomation('Select (1-6): ');
     const choice = parseInt(optionInput);
 
     switch (choice) {
@@ -52,8 +52,7 @@ async function showMenu() {
         default:
             console.log('Invalid option. Please select 1-6.');
     }
-
-    showMenu();
+    mainASOAutomation();
 }
 
-showMenu();
+mainASOAutomation();

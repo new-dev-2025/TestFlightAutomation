@@ -295,6 +295,3 @@ process.on('SIGINT', () => {
 module.exports = {
     RunAcceptableInviteLinkScrapper
 }
-
-
-// RunAcceptableInviteLinkScrapper()

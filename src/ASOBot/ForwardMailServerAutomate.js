@@ -304,8 +304,6 @@ async function RunForwardMailToMainMailServer() {
   }
 }
 
-// RunForwardMailToMainMailServer()
-
 module.exports = {
   RunForwardMailToMainMailServer
 }

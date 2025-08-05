@@ -1,5 +1,5 @@
 const Imap = require('imap');
-const accounts = require('../data/Account.json')
+const accounts = require('@/data/Account.json')
 
 async function clearAllInbox(account) {
   return new Promise((resolve) => {

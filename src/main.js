@@ -20,12 +20,12 @@ async function getInputOptionASOBotAutomation(prompt) {
 
 async function mainASOAutomation() {
     console.log('\n=== ASO TestFlight Automation System ===');
-    console.log('0. Exit');
+    console.log('0. Terminate');
     console.log('1. Run Chrome UI: Scrape Acceptable TestFlight Invitation URLs');
     console.log('2. Forward Sub Mail to Main Server');
     console.log('3. Clear Apple ID Inbox');
     console.log('4. Scrape TestFlight Links from Main Mail Server');
-    console.log('5. Fetch Acceptable Invitable Links from Main Server');
+    console.log('5. Scrape Acceptable Invitable Links from Main Server');
 
     const optionInput = await getInputOptionASOBotAutomation('Select (1-6): ');
     const choice = parseInt(optionInput);

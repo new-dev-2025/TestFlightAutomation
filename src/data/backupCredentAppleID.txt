@@ -138,3 +138,9 @@ AlaavfZanhe4590@icloud.com
 ebrartelek08@icloud.com
 Tyy199511     6303845734
 https://lixsms.com/?code=yWdaDJrA
+
+
+  {
+    "email": "ebrartelek08@icloud.com",
+    "password": "xppd-hywm-qsqo-kdba"
+  }

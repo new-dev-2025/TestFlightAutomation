@@ -106,7 +106,6 @@ class FullyAutomatedTestFlight {
       console.log('❌ Invalid URL detected');
       return { isInvalid: true };
     }
-
     return { isInvalid: false };
   }
 
@@ -178,14 +177,12 @@ class FullyAutomatedTestFlight {
 
   async fillPasswordField(password) {
     console.log('🔑 Filling password field...');
-
     const passwordField = await this.page.waitForSelector('div.password input#password_text_field', {
       visible: true,
       timeout: 15000
     });
 
     await this.fillField(passwordField, password);
-
     const enteredValue = await passwordField.evaluate(el => el.value);
     if (enteredValue !== password) {
       throw new Error('Password verification failed');
@@ -212,8 +209,12 @@ class FullyAutomatedTestFlight {
   }
 
   async trustBtnClick() {
-    await this.page.waitForSelector('#aid-auth-widget-iFrame', { timeout: 15000 });
-    console.log('✅ Found iframe');
+    try {
+      await this.page.waitForSelector('#aid-auth-widget-iFrame', { timeout: 15000 });
+      console.log('✅ Found iframe');
+    } catch {
+      console.log('❌  Found not iframe');
+    }
     const iframe = await this.page.$('#aid-auth-widget-iFrame');
     if (!iframe) {
       console.log('❌ Iframe not found');
@@ -327,8 +328,12 @@ class FullyAutomatedTestFlight {
   }
 
   async tapResetToPhoneNumber() {
+    try {
+      await this.page.waitForSelector('#aid-auth-widget-iFrame', { timeout: 15000 });
+    } catch {
+      console.log("❌ Could not find tap reset to phone number");
 
-    await this.page.waitForSelector('#aid-auth-widget-iFrame', { timeout: 15000 });
+    }
     const iframe = await this.page.$('#aid-auth-widget-iFrame');
     if (!iframe) return false;
 
@@ -348,7 +353,11 @@ class FullyAutomatedTestFlight {
 
   async tabRequestByPhoneNumber() {
     await wait(5000)
-    await this.page.waitForSelector('#aid-auth-widget-iFrame', { timeout: 15000 });
+    try {
+      await this.page.waitForSelector('#aid-auth-widget-iFrame', { timeout: 15000 });
+    } catch {
+      console.log("❌ Cannot get to your text phone number");
+    }
     const iframe = await this.page.$('#aid-auth-widget-iFrame');
     if (!iframe) return false;
     const frame = await iframe.contentFrame();

@@ -3,7 +3,7 @@ const nodemailer = require('nodemailer');
 const { simpleParser } = require('mailparser');
 
 const accounts = require('../data/Account.json');
-const MAIN_EMAIL = 'ebrartelek08@icloud.com';
+const MAIN_EMAIL = 'MostamhKalwe9162@icloud.com';
 const processedMessages = new Set();
 
 function startForwarding(account) {

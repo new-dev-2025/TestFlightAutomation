@@ -4,7 +4,8 @@
 
 ---
 
- ## ⚙️ Setup environment
+## 📁 Project Structure Environment
+
 ```bash
    ├── 📥 git clone git@github.com:xiaoma6869Pro/TestFlightAutomation.git
    ├── 🚀 sh ctr.sh
@@ -18,7 +19,7 @@
     ├── 🕷️ 4. Scrape TestFlight Links from Main Mail Server
     ├── 🔗 5. Scrape Acceptable Invitable Links from Main Server
 
-## 📁 Project Structure
+
 
 ```bash
 📦 TestFlight_Automation/

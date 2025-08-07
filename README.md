@@ -4,7 +4,7 @@
 
 ---
 
-## ⚙️ Setup environment
+ ## ⚙️ Setup environment
 ```bash
    ├── 📥 git clone git@github.com:xiaoma6869Pro/TestFlightAutomation.git
    ├── 🚀 sh ctr.sh

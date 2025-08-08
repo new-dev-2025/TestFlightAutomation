@@ -7,11 +7,11 @@ const MAIN_EMAIL = 'ebrartelek08@icloud.com';
 const processedMessages = new Set();
 
 function startForwarding(account) {
-  const { email, password } = account;
+  const { email, privateKey } = account;
   console.log(`[🚀] Setting up forwarding: ${email} → ${MAIN_EMAIL}`);
   const imap = new Imap({
     user: email,
-    password: password,
+    password: privateKey,
     host: 'imap.mail.me.com',
     port: 993,
     tls: true,
@@ -31,7 +31,7 @@ function startForwarding(account) {
     secure: false,
     auth: {
       user: email,
-      pass: password,
+      pass: privateKey,
     },
     tls: {
       rejectUnauthorized: false
@@ -255,7 +255,7 @@ async function verifyConfiguration() {
   
   // Validate account format
   for (const account of accounts) {
-    if (!account.email || !account.password) {
+    if (!account.email || !account.privateKey) {
       console.error(`[❌] Invalid account format:`, account);
       process.exit(1);
     }
